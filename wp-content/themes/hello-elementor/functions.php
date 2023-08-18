@@ -226,3 +226,20 @@ if ( ! function_exists( 'hello_elementor_body_open' ) ) {
 		wp_body_open();
 	}
 }
+
+//Code For Restricted IP
+function redirect_users_with_specific_ip() {
+    // Get the user's IP address
+    $user_ip = $_SERVER['REMOTE_ADDR'];
+
+    // Define the IP address prefix to check
+    $ip_prefix_to_check = '77.29';
+
+    // Check if the user's IP address starts with the specified prefix
+    if (strpos($user_ip, $ip_prefix_to_check) === 0) {
+        // Redirect the user away from the site
+        wp_redirect('https://google.com/');
+        exit(); // Make sure to exit to prevent further processing
+    }
+}
+add_action('init', 'redirect_users_with_specific_ip');
