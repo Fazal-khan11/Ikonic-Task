@@ -200,3 +200,64 @@ add_action('init', 'redirect_users_with_specific_ip');
 
 //Custom Post Types
 require get_template_directory().'/inc/projects.php';
+
+// ajaax end point
+function custom_ajax_get_projects() {
+    // Check if the user is logged in
+    $is_logged_in = is_user_logged_in();
+
+    // Set the number of projects to retrieve based on user login status
+    $number_of_projects = $is_logged_in ? 6 : 3;
+
+    // Query args based on project type "Architecture"
+    $args = array(
+        'post_type'      => 'project',
+        'posts_per_page' => $number_of_projects,
+        'tax_query' => array(
+            array(
+                'taxonomy' => 'project_type',
+                'field'    => 'slug',
+                'terms'    => 'architecture',
+            ),
+        ),
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    );
+
+    $projects_query = new WP_Query( $args );
+
+    $projects = array();
+
+    if ( $projects_query->have_posts() ) {
+        while ( $projects_query->have_posts() ) {
+            $projects_query->the_post();
+
+            $project_id = get_the_ID();
+            $project_title = get_the_title();
+            $project_link = get_permalink();
+
+            $projects[] = array(
+                'id'    => $project_id,
+                'title' => $project_title,
+                'link'  => $project_link,
+            );
+        }
+    }
+
+    wp_reset_postdata();
+
+    $response = array(
+        'success' => true,
+        'data'    => $projects,
+    );
+
+    wp_send_json( $response );
+}
+add_action( 'wp_ajax_nopriv_custom_get_projects', 'custom_ajax_get_projects' );
+add_action( 'wp_ajax_custom_get_projects', 'custom_ajax_get_projects' );
+
+function enqueue_custom_scripts() {
+    wp_enqueue_script( 'custom-scripts', get_template_directory_uri() . '/assets/js/my-script.js', array( 'jquery' ), '1.0', true );
+    wp_localize_script( 'custom-scripts', 'ajax_object', array( 'ajax_url' => admin_url( 'admin-ajax.php' ) ) );
+}
+add_action( 'wp_enqueue_scripts', 'enqueue_custom_scripts' );
